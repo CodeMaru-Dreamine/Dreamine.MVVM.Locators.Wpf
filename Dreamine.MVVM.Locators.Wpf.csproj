@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Dreamine.MVVM.Locators.Wpf</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Dreamine Core Team</Authors>
     <Company>Dreamine</Company>
     <Description>WPF 전용 View ↔ ViewModel 자동 연결 및 주입 기능을 포함하는 Dreamine Locator 모듈입니다.</Description>

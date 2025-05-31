@@ -58,5 +58,54 @@ namespace Dreamine.MVVM.Locators.Wpf
 					view.DataContext = vm;
 			}
 		}
+
+		/// <summary>
+		/// 📌 ViewModel 타입에 대응되는 View를 동적으로 생성하고, DataContext를 설정하여 반환합니다.
+		/// 
+		/// ViewModel의 네임스페이스 및 클래스명을 기준으로, 대응하는 View의 타입을 추론합니다.
+		/// 예: <c>MainPageViewModel → MainPageView</c>, <c>ViewModels → Views</c> 네임스페이스 변환
+		/// </summary>
+		/// <param name="viewModel">ViewModel 인스턴스</param>
+		/// <returns>생성된 View 인스턴스 (FrameworkElement)</returns>
+		/// <exception cref="InvalidOperationException">View 타입을 찾을 수 없는 경우</exception>
+		public static FrameworkElement ResolveView(object viewModel)
+		{
+			var vmType = viewModel.GetType();
+			var fullName = vmType.FullName!;
+
+			var candidates = new[]
+			{
+				fullName.Replace("ViewModels", "Views").Replace("ViewModel", "View"),
+				fullName.Replace("ViewModels", "Views").Replace("ViewModel", ""),
+				fullName.Replace("ViewModels", "Pages").Replace("ViewModel", "View"),
+				fullName.Replace("ViewModels", "Pages").Replace("ViewModel", ""),
+				fullName.Replace(".ViewModel", ""),
+				fullName.Replace(".ViewModel", "View"),
+				fullName.Replace("PageModels", "Pages").Replace("PageModel", "Page"),
+				fullName.Replace("PageModels", "Pages").Replace("PageModel", "")
+			};
+
+			Type? viewType = null;
+
+			foreach (var name in candidates.Distinct())
+			{
+				viewType = AppDomain.CurrentDomain
+					.GetAssemblies()
+					.Select(a => a.GetType(name))
+					.FirstOrDefault(t => t != null);
+
+				if (viewType != null)
+					break;
+			}
+
+			if (viewType == null)
+				throw new InvalidOperationException($"❌ View를 찾을 수 없습니다: {string.Join(" or ", candidates)}");
+
+			var view = (FrameworkElement)Activator.CreateInstance(viewType)!;
+			view.DataContext = viewModel;
+			return view;
+		}
+
 	}
 }
+
