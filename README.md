@@ -1,120 +1,164 @@
-# 🌟 Dreamine.MVVM.Locators.Wpf
+# Dreamine.MVVM.Locators.Wpf
 
-## 🇰🇷 한국어 소개
+WPF integration layer for the Dreamine MVVM locator system.
 
-`Dreamine.MVVM.Locators.Wpf`는 WPF 환경에서 ViewModelLocator 패턴을  
-보다 유연하게 사용할 수 있도록 도와주는 ViewModel 자동 바인딩 유틸리티입니다.
+This package extends `Dreamine.MVVM.Locators` with WPF-specific runtime helpers for:
 
-특히 `ViewModelBinder`를 통해 XAML에서 명시적인 코딩 없이  
-View와 ViewModel을 자동으로 연결할 수 있도록 지원합니다.
+- automatic View ↔ ViewModel binding
+- View resolution from ViewModel instances
+- region-based content navigation
+- `ContentControl`-based navigation hosting
 
----
+It is designed for WPF applications that want lightweight locator-based composition without introducing a heavy framework.
 
-## ✨ 주요 클래스
-
-| 클래스 | 설명 |
-|--------|------|
-| `ViewModelBinder` | View의 타입 또는 네이밍 규칙에 따라 ViewModel을 자동 바인딩 |
-| `Attach` 메서드 | 특정 View에 ViewModel 수동 연결도 가능 |
-| 디자인 타임 | 디자인 모드 여부 자동 판단 및 처리 지원 |
+[➡️ 한국어 문서 보기](./README_ko.md)
 
 ---
 
-## 🧑‍💻 사용 예시
+## Purpose
 
-### 1. 네이밍 기반 자동 연결 (XAML)
+`Dreamine.MVVM.Locators.Wpf` provides the WPF runtime bridge between:
+
+- `Dreamine.MVVM.Locators`
+- WPF `FrameworkElement`
+- XAML attached properties
+- region/content navigation patterns
+
+This package is responsible for connecting Views and ViewModels at runtime in a WPF-friendly way.
+
+---
+
+## Key Components
+
+### `ViewModelBinder`
+
+WPF attached-property helper for automatic ViewModel wiring.
+
+Responsibilities:
+
+- exposes `AutoWireViewModel` attached property
+- resolves ViewModel by using `ViewModelLocator.Resolve(view.GetType())`
+- assigns resolved ViewModel to `DataContext`
+- resolves View instances from ViewModel instances using naming conventions
+
+Example:
 
 ```xml
 <Window
-  xmlns:locator="clr-namespace:Dreamine.MVVM.Locators.Wpf"
-  locator:ViewModelBinder.Enable="True">
-```
-
-### 2. 수동 연결 (CodeBehind)
-
-```csharp
-ViewModelBinder.Attach(this, typeof(MainViewModel));
+    xmlns:locator="clr-namespace:Dreamine.MVVM.Locators.Wpf"
+    locator:ViewModelBinder.AutoWireViewModel="True">
+</Window>
 ```
 
 ---
 
-## 📦 NuGet 설치
+### `RegionBinder`
 
-```bash
-dotnet add package Dreamine.MVVM.Locators.Wpf
-```
+Attached-property-based region registry for `ContentControl`.
 
-또는 `.csproj`에 직접 추가:
+Responsibilities:
+
+- registers `ContentControl` instances by region name
+- navigates by region key
+- resolves View from ViewModel through `ViewModelBinder.ResolveView`
+
+Example:
 
 ```xml
-<PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.0" />
+<ContentControl
+    local:RegionBinder.RegionName="MainRegion" />
+```
+
+```csharp
+RegionBinder.Navigate("MainRegion", viewModel);
 ```
 
 ---
 
-## 🔗 관련 링크
+### `ContentControlNavigator`
 
-- 📁 GitHub: [Dreamine.MVVM.Locators.Wpf](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Locators.Wpf)
-- 📝 문서: 준비 중
-- 💬 문의: [CodeMaru 드리마인팀](mailto:togood1983@gmail.com)
+Simple `INavigator` implementation for `ContentControl`.
 
----
+Responsibilities:
 
-## 🧙 프로젝트 철학
+- resolves a View from a ViewModel
+- assigns the resolved View to `ContentControl.Content`
 
-> "MVVM 바인딩은 자동화되어야 한다."
+Example:
 
-Dreamine은 명시적 DI 뿐 아니라, **규칙 기반 자동화된 바인딩 방식**도 함께 제공합니다.  
-이를 통해 ViewModelLocator 패턴을 더욱 실용적으로 사용할 수 있습니다.
-
----
-
-## 🖋️ 작성자 정보
-
-- 작성자: Dreamine Core Team  
-- 소유자: minsujang  
-- 날짜: 2025년 5월 25일  
-- 라이선스: MIT
+```csharp
+var navigator = new ContentControlNavigator(MainContentControl);
+navigator.Navigate(viewModel);
+```
 
 ---
 
-📅 문서 작성일: 2025년 5월 25일  
-⏱️ 총 소요시간: 약 10분  
-🤖 협력자: ChatGPT (GPT-4), 별명: 프레임워크 유혹자  
-✍️ 직책: Dreamine Core 설계자 (코드마루 대표 설계자)  
-🖋️ 기록자 서명: 아키로그 드림
+## View Resolution Rules
+
+`ViewModelBinder.ResolveView(object viewModel)` tries multiple naming patterns.
+
+Examples of supported conversions include:
+
+- `ViewModels` → `Views`
+- `ViewModel` → `View`
+- `ViewModel` → empty string
+- `ViewModels` → `Pages`
+- `PageModels` → `Pages`
+- `PageModel` → `Page`
+
+This allows the package to work with several WPF naming styles.
 
 ---
 
-## 🇺🇸 English Summary
+## Requirements
 
-`Dreamine.MVVM.Locators.Wpf` offers auto-binding support for ViewModels  
-in WPF environments based on naming conventions or manual attachment.
-
-### ✨ Key Features
-
-| Component | Description |
-|-----------|-------------|
-| `ViewModelBinder` | Automatically binds View to ViewModel via XAML |
-| `Attach()` | Manually connects View to ViewModel at runtime |
-| Design-mode support | Works with runtime or design-mode detection |
+- .NET 8.0
+- WPF enabled
+- Reference to `Dreamine.MVVM.Locators`
 
 ---
 
-### 📦 Installation
+## Installation
 
 ```bash
 dotnet add package Dreamine.MVVM.Locators.Wpf
 ```
 
+Or add it directly to your project file:
+
+```xml
+<PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.3" />
+```
+
 ---
 
-### 🔖 License
+## Architecture Role
 
-MIT
+This package belongs to the WPF integration layer of the Dreamine MVVM stack.
+
+```text
+Dreamine.MVVM.Locators
+        ↓
+Dreamine.MVVM.Locators.Wpf
+        ↓
+WPF Views / Regions / Navigation
+```
 
 ---
 
-📅 Last updated: May 25, 2025  
-✍️ Author: Dreamine Core Team  
-🤖 Assistant: ChatGPT (GPT-4)
+## When to Use
+
+Use this package when:
+
+- you are building a WPF application with Dreamine MVVM
+- you want automatic ViewModel binding from XAML
+- you want to resolve a View from a ViewModel dynamically
+- you need lightweight region/content navigation without a large framework
+
+Do not use this package outside WPF.
+
+---
+
+## License
+
+MIT License
