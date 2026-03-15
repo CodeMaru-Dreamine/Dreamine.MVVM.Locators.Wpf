@@ -17,24 +17,17 @@
     <Title>Dreamine.MVVM.Locators.Wpf</Title>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
-    <Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>
-    <PackageIcon>icon.png</PackageIcon>
+    <Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>   
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\..\..\Document\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\.Templates\Dreamine.MVVM.Template\icon.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dreamine.MVVM.Locators\Dreamine.MVVM.Locators.csproj" />
+    <ProjectReference Include="..\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+    <ProjectReference Include="..\Locators\Dreamine.MVVM.Locators.csproj" />
   </ItemGroup>
 
 </Project>
