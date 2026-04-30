@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Windows;
 using Dreamine.MVVM.Locators;
 
@@ -16,17 +15,6 @@ namespace Dreamine.MVVM.Locators.Wpf
     /// </summary>
     public static class ViewModelBinder
     {
-        private const string ViewModelsToken = "ViewModels";
-        private const string ViewModelToken = "ViewModel";
-        private const string ViewsToken = "Views";
-        private const string ViewToken = "View";
-        private const string PagesToken = "Pages";
-        private const string PageModelsToken = "PageModels";
-        private const string PageModelToken = "PageModel";
-        private const string PageToken = "Page";
-        private const string DotViewModelToken = ".ViewModel";
-        private const string EmptyToken = "";
-
         /// <summary>
         /// 📌 ViewModel 자동 연결을 위한 AttachedProperty입니다.
         ///
@@ -95,8 +83,7 @@ namespace Dreamine.MVVM.Locators.Wpf
             string fullName = vmType.FullName
                 ?? throw new InvalidOperationException($"타입 전체 이름을 확인할 수 없습니다: {vmType.Name}");
 
-            string[] candidates = CreateCandidateViewTypeNames(fullName);
-
+            string[] candidates = ViewNamingConvention.GetViewTypeNameCandidates(fullName);
             Type? viewType = FindViewType(candidates);
 
             if (viewType == null)
@@ -111,28 +98,6 @@ namespace Dreamine.MVVM.Locators.Wpf
         }
 
         /// <summary>
-        /// ViewModel 전체 이름을 기준으로 가능한 View 타입 이름 후보를 생성합니다.
-        /// </summary>
-        /// <param name="fullName">ViewModel의 전체 타입 이름</param>
-        /// <returns>View 타입 이름 후보 배열</returns>
-        private static string[] CreateCandidateViewTypeNames(string fullName)
-        {
-            return new[]
-            {
-                fullName.Replace(ViewModelsToken, ViewsToken).Replace(ViewModelToken, ViewToken),
-                fullName.Replace(ViewModelsToken, ViewsToken).Replace(ViewModelToken, EmptyToken),
-                fullName.Replace(ViewModelsToken, PagesToken).Replace(ViewModelToken, ViewToken),
-                fullName.Replace(ViewModelsToken, PagesToken).Replace(ViewModelToken, EmptyToken),
-                fullName.Replace(DotViewModelToken, EmptyToken),
-                fullName.Replace(DotViewModelToken, ViewToken),
-                fullName.Replace(PageModelsToken, PagesToken).Replace(PageModelToken, PageToken),
-                fullName.Replace(PageModelsToken, PagesToken).Replace(PageModelToken, EmptyToken)
-            }
-            .Distinct()
-            .ToArray();
-        }
-
-        /// <summary>
         /// 후보 이름 목록을 기준으로 현재 AppDomain에서 View 타입을 검색합니다.
         /// </summary>
         /// <param name="candidateTypeNames">검색할 View 타입 이름 후보 목록</param>
@@ -141,13 +106,24 @@ namespace Dreamine.MVVM.Locators.Wpf
         {
             foreach (string candidateTypeName in candidateTypeNames)
             {
-                Type? viewType = AppDomain.CurrentDomain
-                    .GetAssemblies()
-                    .Select(assembly => assembly.GetType(candidateTypeName))
-                    .FirstOrDefault(type => type != null);
-
-                if (viewType != null)
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
+                    Type? viewType = assembly.GetType(candidateTypeName);
+                    if (viewType == null)
+                    {
+                        continue;
+                    }
+
+                    if (!typeof(FrameworkElement).IsAssignableFrom(viewType))
+                    {
+                        continue;
+                    }
+
+                    if (viewType.IsAbstract)
+                    {
+                        continue;
+                    }
+
                     return viewType;
                 }
             }
